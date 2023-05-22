@@ -1,0 +1,11 @@
+<svg version="1.1" id="bandera" x="0px" y="0px" width="26px" height="26px" viewBox="-1.504 -1.062 44.945 58.04" enable-background="new 0 0 76 76" xmlns="http://www.w3.org/2000/svg">
+  <defs></defs>
+  <g transform="matrix(1, 0, 0, 1, -2.831189, -2.211873)">
+    <g transform="matrix(1, 0, 0, 1, -13.094298, -7.785796)">
+      <polygon points="35.999,55.5 35.999,16.5 40,16.5 40,55.5 35.999,55.5    "></polygon>
+      <polygon fill="#FF0000" points="40,13.875 19.375,27 40,40.125     "></polygon>
+      <rect x="28.571" y="51.625" width="18.857" height="5.5"></rect>
+      <rect x="20.222" y="56.459" width="35.555" height="7.041" style="fill: rgb(76, 76, 76);"></rect>
+    </g>
+  </g>
+</svg>
