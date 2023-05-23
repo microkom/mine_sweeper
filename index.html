@@ -176,7 +176,7 @@
     var stop_clicks = false
 
     //developer mode
-    if (1) {
+    if (0) {
       reset(1)
     } else {
       create_board()
@@ -252,9 +252,6 @@
       document.getElementById("you_won").innerHTML = ""
     }
 
-    function disable_table() { //fix this
-      let element = document.getElementById("myTable")
-    }
 
     /**
      * Counts the values of the array "cell"
@@ -277,11 +274,8 @@
       console.log(count_mines + " m, " + count_flags + " f, " + count_clicked + " c, " + count_mine_plus_flags + " m+f")
 
       if (count_mine_plus_flags == count_flags && count_flags == count_mines && (count_flags + count_clicked) == (grid_rows * grid_cols) && count_mines != 0) {
-
-        display_message("winner");
-        stop_timer();
+        you_win()
       }
-      disable_table()
     }
     /**
      * Creates the initial board and when changing levels of difficulty
@@ -458,14 +452,29 @@
         }
       }
     }
+
+
+
     /**
      * Displays "Game Over" when the user loses
      */
     function you_lost() {
       display_message("loser")
-      stop_timer()
-      disable_table() //not in use yet
+      disable_table()
     }
+
+    function you_win() {
+      display_message("winner");
+      disable_table()
+
+    }
+
+    function disable_table() {
+      stop_clicks = true
+      stop_timer();
+    }
+
+
     /**
      * Text message displaying function
      */
@@ -525,6 +534,7 @@
                 object_counter()
               } else {
                 e.preventDefault()
+                disable_table()
               }
             }
           }
@@ -563,6 +573,7 @@
           }
         } else {
           e.preventDefault()
+          disable_table()
         }
       } catch (error) {
         //Preventing the error to be displayed in the console
