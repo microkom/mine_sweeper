@@ -136,6 +136,10 @@
     .border_won {
       border: .3rem solid cornflowerblue;
     }
+    
+    .border_lost {
+      border: .3rem solid red;
+    }
   </style>
 </head>
 
@@ -146,13 +150,14 @@
   </h3>
   <br>
   <p class="">
-    <span id="display_mine_pending" class="text crimson mode_area"></span>&emsp;&emsp; <span id="elapsed_time" class="text crimson mode_area">0:00</span>
+    <span id="display_mine_pending" class="text crimson mode_area"></span> &emsp;&emsp;
+    <span id="elapsed_time" class="text crimson mode_area">0:00</span>
   </p>
   <br>
   <section id="mine_field"></section>
   <br>
   <section class="mode_area">
-    <!-- <div class="text">Mode</div> 
+    <!-- <div class="text">Mode</div>
     <br>-->
     <button class="button" id="button1" onclick="reset(1)">Easy</button>
     <button class="button" id="button2" onclick="reset(2)">Medium</button>
@@ -163,20 +168,19 @@
   <section id="you_won"></section>
   <section id="you_lost"></section>
   <section id="error">
-    <ul>faltan progagar ceros</ul>
+    <ul></ul>
   </section>
   <script type="text/javascript">
-    var grid_cols = 5
-    var grid_rows = 5
-    var inicial_mines = 2 //
-
+    var grid_cols = 3
+    var grid_rows = 3
+    var inicial_mines = 0 //
 
     const cell = []
     var firstClick = true;
     var stop_clicks = false
 
     //developer mode
-    if (0) {
+    if (1) {
       reset(1)
     } else {
       create_board()
@@ -216,8 +220,8 @@
       document.getElementById("display_mine_pending").innerHTML = 0
       document.getElementById("elapsed_time").innerHTML = "0:00"
       const table = document.getElementById("myTable")
-      console.log("table")
-      console.log(table)
+        //console.log("table")
+        //console.log(table)
       if (table) table.remove()
       let remove_class = document.getElementsByClassName("button_pressed")
       if (remove_class.length > 0) {
@@ -243,7 +247,7 @@
         inicial_mines = 99
         button = document.getElementById("button3")
       }
-
+      stop_timer()
       create_board(grid_rows, grid_cols)
       button.classList.add("button_pressed")
 
@@ -251,7 +255,6 @@
       document.getElementById("you_lost").innerHTML = ""
       document.getElementById("you_won").innerHTML = ""
     }
-
 
     /**
      * Counts the values of the array "cell"
@@ -270,8 +273,8 @@
         }
       }
       display_message("pending", (inicial_mines - count_flags));
-      console.log("grid_rows * grid_cols: " + grid_rows * grid_cols)
-      console.log(count_mines + " m, " + count_flags + " f, " + count_clicked + " c, " + count_mine_plus_flags + " m+f")
+      //console.log("grid_rows * grid_cols: " + grid_rows * grid_cols)
+      //console.log(count_mines + " m, " + count_flags + " f, " + count_clicked + " c, " + count_mine_plus_flags + " m+f")
 
       if (count_mine_plus_flags == count_flags && count_flags == count_mines && (count_flags + count_clicked) == (grid_rows * grid_cols) && count_mines != 0) {
         you_win()
@@ -312,28 +315,23 @@
     function check_first_click(row, col) {
       if (firstClick) {
         lay_mines(row, col)
-        start_timer()
         firstClick = false
-        console.log("firstClick = false, inside check_first_click()")
         buscar_minas_adyacentes()
-          //borrar - muestra el array de las minas y adjac
-        console.log("cell, inside check_first_click()")
-        console.log(cell)
+        start_timer()
       }
-      console.log("exit check_first_click())")
     }
     /**
      * Busqueda de minas en toda la tabla.
      * Guarda las minas encontradas en una variable
      */
     function buscar_minas_adyacentes() {
-      console.log("buscar_minas_adyacentes, inicio")
+      //console.log("buscar_minas_adyacentes, inicio")
       for (let i = 0; i < grid_rows; i++) {
         for (let j = 0; j < grid_cols; j++) {
           cell[i][j].adjacent_mines = mina_adjacente(i, j)
         }
       }
-      console.log("buscar_minas_adyacentes, fin")
+      //console.log("buscar_minas_adyacentes, fin")
     }
 
     //Busqueda de minas adyacentes alrededor de una celda especifica
@@ -409,15 +407,15 @@
     }
 
     function lay_mines(row, col) {
-      console.log("lay_mines, inicio")
+      //console.log("lay_mines, inicio")
       let counter = 0
       let visual_counter = 0
       let currentCell = document.getElementById("cell_" + row + "-" + col)
       try {
         cell[row][col].safe = true
-        console.log("safe cell is : row col")
-        console.log(row)
-        console.log(col)
+          //console.log("safe cell is : row col")
+          //console.log(row)
+          //console.log(col)
       } catch (error) {
         //prevent error display in console
       }
@@ -435,8 +433,8 @@
         }
         visual_counter++
       }
-      console.log("mine counter " + counter) //borrar
-      console.log("lay_mines, fin + visual counter " + visual_counter)
+      //console.log("mine counter " + counter) //borrar
+      //console.log("lay_mines, fin + visual counter " + visual_counter)
     }
     /**
      * Displays all mines when the user loses
@@ -453,8 +451,6 @@
       }
     }
 
-
-
     /**
      * Displays "Game Over" when the user loses
      */
@@ -466,14 +462,12 @@
     function you_win() {
       display_message("winner");
       disable_table()
-
     }
 
     function disable_table() {
       stop_clicks = true
       stop_timer();
     }
-
 
     /**
      * Text message displaying function
@@ -482,6 +476,7 @@
       switch (text) {
         case "loser":
           document.getElementById("you_lost").innerHTML = "Game Over"
+          document.getElementById("myTable").classList.add("border_lost")
           break;
         case "winner":
           document.getElementById("myTable").classList.add("border_won")
@@ -496,18 +491,200 @@
     }
     //===============================================================
 
+
+
+
+    /**
+     * attempt to propagate zeros - //in development
+     */
+    function count_zero(row, col) {
+      row *= 1 //making sure it is a number afterwards
+      col *= 1
+      var bundle = {}
+      let counter = 0
+      let control_counter = 0
+      let i = j = 0
+      let layer = 0
+
+      _find_zeroes_around_cell(row, col)
+
+      console.log("bundle")
+      console.log(bundle)
+
+      //longitud de la variable bundle
+      let bundle_length = Object.keys(bundle).length
+
+      //no adyacent mines, not clicked, not a mine
+      function __is_cell_empty_before_click(row, col) {
+        if (!cell[row][col].adjacent_mines && !cell[row][col].clicked && !cell[row][col].mine) {
+          return true
+        }
+      }
+
+
+      function _find_zeroes_around_cell(row, col) {
+
+        if (!cell[row][col].adjacent_mines) {
+          layer++
+          row *= 1
+          col *= 1
+
+          let _up = row * 1 - 1
+          let _left = col * 1 - 1
+          let _right = col * 1 + 1
+          let _down = row * 1 + 1
+
+          let a = grid_cols * 1 - 1
+          let b = grid_rows * 1 - 1
+
+          function set_clicked(row, col) {
+            mark_as_clicked(row, col)
+          }
+
+          if (row == 0 && col == 0) {
+            //top left corner
+            down()
+            down_right()
+            right()
+          } else if (row == 0 && col == a) {
+            //top right corner
+            left()
+            down_left()
+            down()
+          } else if (row == 0 && col < a) {
+            //top between corners
+            left()
+            down_left()
+            down()
+            down_right()
+            right()
+          } else if (row < b && col == 0) {
+            //left between corners
+            up()
+            up_right()
+            right()
+            down_right()
+            down()
+          } else if (row == b && col == 0) {
+            //bottom left corner
+            up()
+            up_right()
+            right()
+          } else if (row == b && col < a) {
+            //bottom between corners
+            left()
+            up_left()
+            up()
+            up_right()
+            right()
+          } else if (row == b && col == a) {
+            //bottom right corner
+            left()
+            up_left()
+            up()
+          } else if (row > 0 && col == a) {
+            // right between corners
+            up()
+            up_left()
+            left()
+            down_left()
+            down()
+          } else {
+            up()
+            up_right()
+            right()
+            down_right()
+            down()
+            down_left()
+            left()
+            up_left()
+          }
+
+          function up_left() {
+            if (!cell[_up][_left].adjacent_mines) {
+              set_clicked(_up, _left)
+            }
+          }
+
+          function up() {
+            if (!cell[_up][col].adjacent_mines) {
+              set_clicked(_up, col)
+            }
+          }
+
+          function up_right() {
+            if (!cell[_up][_right].adjacent_mines) {
+              set_clicked(_up, _right)
+            }
+          }
+
+          function right() {
+            if (!cell[row][_right].adjacent_mines) {
+              set_clicked(row, _right)
+            }
+          }
+
+          function down_right() {
+            if (!cell[_down][_right].adjacent_mines) {
+              set_clicked(_down, _right)
+            }
+          }
+
+          function down() {
+            if (!cell[_down][col].adjacent_mines) {
+              set_clicked(_down, col)
+            }
+          }
+
+          function down_left() {
+            if (!cell[_down][_left].adjacent_mines) {
+              set_clicked(_down, _left)
+            }
+          }
+
+          function left() {
+            if (!cell[row][_left].adjacent_mines) {
+              set_clicked(row, _left)
+            }
+          }
+        }
+      }
+    }
+
+    function unique_values(items) {
+      //let items_length = Object.keys(items).length
+      let d = {}
+      let out = []
+      for (let i = 0; i < Object.keys(items).length; i++) {
+        let item = items[i]
+        let rep = item.toString()
+
+        if (!d[rep]) {
+          d[rep] = true;
+          out.push(item)
+        }
+      }
+      return out
+    }
+
+    function mark_as_clicked(row, col) {
+      let clicked = document.getElementById("cell_" + row + "-" + col);
+      cell[row][col].clicked = true
+      clicked.classList.add("clicked")
+    }
+
     /**
      * Left click controls
      */
     document.onclick = (e) => {
       const my_node = document.getElementById('myTable')
       const isClickInside = my_node.contains(e.target)
-      console.log("isClickInside: " + isClickInside + " doc.onclick")
+        //console.log("isClickInside: " + isClickInside + " doc.onclick")
       let row = e.target.dataset.row;
       let col = e.target.dataset.col;
       if (isClickInside && row > -1) {
-        console.log("document.onclick + e.target.dataset.row: " + row) //borrar
-        console.log("document.onclick + e.target.dataset.col: " + col) //borrar
+        //console.log("document.onclick + e.target.dataset.row: " + row) //borrar
+        //console.log("document.onclick + e.target.dataset.col: " + col) //borrar
         let clicked = document.getElementById("cell_" + row + "-" + col);
         //Poner minas
         check_first_click(row, col)
@@ -520,18 +697,21 @@
               //muestra todas las minas
               display_all_mines()
               you_lost()
-              stop_clicks = true
               e.preventDefault()
-            } else {
+            } else { //if cell is not a mine
               if (!stop_clicks) {
+
                 //escribir numero de minas adyacentes
                 if (cell[row][col].adjacent_mines > 0) {
                   clicked.innerHTML = cell[row][col].adjacent_mines
+                } else {
+                  count_zero(row, col);
                 }
                 //Agrega la clase "clicked" a la celda actual y la pone gris
-                cell[row][col].clicked = true
-                clicked.classList.add("clicked")
+                mark_as_clicked(row, col)
+
                 object_counter()
+
               } else {
                 e.preventDefault()
                 disable_table()
@@ -569,7 +749,6 @@
               clicked.classList.remove("duda")
               object_counter()
             }
-            console.log("flagged: " + cell[row][col].flagged)
           }
         } else {
           e.preventDefault()
