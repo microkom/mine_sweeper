@@ -26,6 +26,9 @@
     h1 {
       font-size: 3rem;
       font-weight: bolder;
+      margin-top: .3rem;
+      margin-bottom: .3rem;
+      text-shadow: 2px 2px 2px rgb(139, 131, 131), 3px 3px 5px rgb(133, 125, 123);
     }
     
     table {
@@ -34,8 +37,8 @@
     }
     
     td {
-      height: 1rem;
-      width: 1rem;
+      height: 1.1rem;
+      width: 1.1rem;
       background-color: #ccc;
       border-left: .2rem solid #fafafa;
       border-top: .2rem solid #fafafa;
@@ -43,20 +46,34 @@
       border-bottom: .2rem solid #aaa;
       font-weight: 900;
       font-size: .8rem;
+      border-spacing: 0;
+      border-collapse: none;
     }
     
     .clicked {
       border: .2rem solid #e6e1e1;
       background-color: #eee;
       color: #666666;
+      animation: fadein .35s;
     }
     
     .mine {
-      background-color: #ff0000 !important;
-      ;
+      background-color: cornflowerblue;
+      animation: fadein .35s;
     }
     
-    .mode_area {
+    .mineLost {
+      background-color: crimson;
+      animation: fadein .35s;
+      color: #4e4343;
+    }
+    
+    .fakeMine {
+      background-color: #f5f050;
+      animation: fadein .35s;
+    }
+    
+    .modeArea {
       margin: auto;
       border: 1px solid black;
       border-radius: 7px;
@@ -73,29 +90,32 @@
       color: crimson;
     }
     
-    .bandera:before {
+    .flag:before {
       font-size: .8rem;
-      content: "#";
+      content: "\2691";
+      /*   ⚑ - taken from https://www.compart.com/en/unicode/U+2691 */
       animation: fadein .5s;
+      /* color: crimson; */
     }
     
-    .duda:before {
+    .hesitation:before {
       font-size: .8rem;
       content: "?";
       animation: fadein .5s;
+      color: crimson;
     }
     
-    #you_lost {
+    #youLost {
       font-size: 1.7rem;
       font-weight: bolder;
       color: crimson;
       animation: fadein 1s;
     }
     
-    #you_won {
-      font-size: 1.7rem;
+    #youWon {
+      font-size: 3rem;
       font-weight: bolder;
-      color: cornflowerblue;
+      color: blue;
       animation: fadein .5s;
     }
     
@@ -125,7 +145,7 @@
       background-color: #eea333
     }
     
-    .button_pressed {
+    .buttonPressed {
       background-color: #3b3534;
       color: #e9e4e4;
       border: 2px solid coral;
@@ -133,11 +153,11 @@
         box-shadow: 0 2px #999; */
     }
     
-    .border_won {
-      border: .3rem solid cornflowerblue;
+    .borderGameWon {
+      border: 1rem solid blue;
     }
     
-    .border_lost {
+    .borderGameLost {
       border: .3rem solid red;
     }
   </style>
@@ -145,18 +165,18 @@
 
 <body>
   <h1>Mine Sweeper </h1>
-  <h3># : mines
+  <h3>&#9873; : mines
     <!-- &emsp;&emsp; ? : marker -->
   </h3>
   <br>
   <p class="">
-    <span id="display_mine_pending" class="text crimson mode_area"></span> &emsp;&emsp;
-    <span id="elapsed_time" class="text crimson mode_area">0:00</span>
+    <span id="displayMinePending" class="text crimson modeArea"></span> &emsp;&emsp;
+    <span id="elapsedTime" class="text crimson modeArea">0:00</span>
   </p>
   <br>
-  <section id="mine_field"></section>
+  <section id="mineField"></section>
   <br>
-  <section class="mode_area">
+  <section class="modeArea">
     <!-- <div class="text">Mode</div>
     <br>-->
     <button class="button" id="button1" onclick="reset(1)">Easy</button>
@@ -165,33 +185,38 @@
   </section>
   <br>
   <br>
-  <section id="you_won"></section>
-  <section id="you_lost"></section>
+  <section id="youWon"></section>
+  <section id="youLost"></section>
   <section id="error">
     <ul></ul>
   </section>
   <script type="text/javascript">
-    var grid_cols = 3
-    var grid_rows = 3
-    var inicial_mines = 0 //
+    /**
+     * Mine sweeper game. Beta version 2.0.1
+     */
+
+    var gridCols = 11
+    var gridRows = 11
+    var initialMines = 1 //
 
     const cell = []
     var firstClick = true;
-    var stop_clicks = false
+    var stopClicks = false
 
     //developer mode
     if (1) {
       reset(1)
     } else {
-      create_board()
+      createBoard()
     }
+
     //Time variables
     var myInterval = null;
     var seconds = 0
     var minutes = 0;
 
     //time functions
-    function start_timer() {
+    function startTimer() {
       myInterval = setInterval(myTimer, 1000);
     }
 
@@ -203,11 +228,11 @@
         minutes++
         seconds = "00"
       }
-      document.getElementById("elapsed_time").innerHTML = minutes + ":" + seconds
+      document.getElementById("elapsedTime").innerHTML = minutes + ":" + seconds
       seconds++
     }
 
-    function stop_timer() {
+    function stopTimer() {
       clearInterval(myInterval);
     }
     /**
@@ -215,550 +240,550 @@
      * param: integer, changes de level of difficulty
      */
     function reset(level) {
-      seconds = 0
-      minutes = 0
-      document.getElementById("display_mine_pending").innerHTML = 0
-      document.getElementById("elapsed_time").innerHTML = "0:00"
-      const table = document.getElementById("myTable")
-        //console.log("table")
-        //console.log(table)
-      if (table) table.remove()
-      let remove_class = document.getElementsByClassName("button_pressed")
-      if (remove_class.length > 0) {
-        remove_class[0].classList.remove("button_pressed")
+      seconds = 0;
+      minutes = 0;
+      document.getElementById("displayMinePending").innerHTML = 0;
+      document.getElementById("elapsedTime").innerHTML = "0:00";
+
+      const table = document.getElementById("myTable");
+      if (table) {
+        table.remove();
       }
-      firstClick = true
-      stop_clicks = false
+
+      const removeClass = document.getElementsByClassName("buttonPressed");
+      if (removeClass.length > 0) {
+        removeClass[0].classList.remove("buttonPressed");
+      }
+
+      firstClick = true;
+      stopClicks = false;
       let button = null;
 
       if (level == 1) {
-        grid_rows = 9
-        grid_cols = 9
-        inicial_mines = 10
-        button = document.getElementById("button1")
+        gridRows = 9;
+        gridCols = 9;
+        initialMines = 10;
+        button = document.getElementById("button1");
       } else if (level == 2) {
-        grid_rows = 16
-        grid_cols = 16
-        inicial_mines = 40
-        button = document.getElementById("button2")
+        gridRows = 16;
+        gridCols = 16;
+        initialMines = 40;
+        button = document.getElementById("button2");
       } else if (level == 3) {
-        grid_rows = 16
-        grid_cols = 30
-        inicial_mines = 99
-        button = document.getElementById("button3")
+        gridRows = 16;
+        gridCols = 30;
+        initialMines = 99;
+        button = document.getElementById("button3");
       }
-      stop_timer()
-      create_board(grid_rows, grid_cols)
-      button.classList.add("button_pressed")
 
-      display_message("pending", inicial_mines)
-      document.getElementById("you_lost").innerHTML = ""
-      document.getElementById("you_won").innerHTML = ""
+      stopTimer();
+      createBoard(gridRows, gridCols);
+      button.classList.add("buttonPressed");
+
+      displayMessage("pending", initialMines);
+      document.getElementById("youLost").innerHTML = "";
+      document.getElementById("youWon").innerHTML = "";
     }
 
     /**
      * Counts the values of the array "cell"
      */
-    function object_counter() {
-      let count_flags = 0
-      let count_mines = 0
-      let count_mine_plus_flags = 0
-      let count_clicked = 0
-      for (let i = 0; i < grid_rows; i++) {
-        for (let j = 0; j < grid_cols; j++) {
-          (cell[i][j].mine && cell[i][j].flagged) ? count_mine_plus_flags++ : null;
-          (cell[i][j].flagged) ? count_flags++ : null;
-          (cell[i][j].mine) ? count_mines++ : null;
-          (cell[i][j].clicked) ? count_clicked++ : null;
+    function objectCounter() {
+      let countFlags = 0;
+      let countMines = 0;
+      let countMinePlusFlags = 0;
+      let countClicked = 0;
+
+      for (let i = 0; i < gridRows; i++) {
+        for (let j = 0; j < gridCols; j++) {
+          if (cell[i][j].mine && cell[i][j].flagged) {
+            countMinePlusFlags++;
+          }
+          if (cell[i][j].flagged) {
+            countFlags++;
+          }
+          if (cell[i][j].mine) {
+            countMines++;
+          }
+          if (cell[i][j].clicked) {
+            countClicked++;
+          }
         }
       }
-      display_message("pending", (inicial_mines - count_flags));
-      //console.log("grid_rows * grid_cols: " + grid_rows * grid_cols)
-      //console.log(count_mines + " m, " + count_flags + " f, " + count_clicked + " c, " + count_mine_plus_flags + " m+f")
 
-      if (count_mine_plus_flags == count_flags && count_flags == count_mines && (count_flags + count_clicked) == (grid_rows * grid_cols) && count_mines != 0) {
-        you_win()
+      displayMessage("pending", (initialMines - countFlags));
+
+      if (
+        countMinePlusFlags === countFlags &&
+        countFlags === countMines &&
+        (countFlags + countClicked) === gridRows * gridCols &&
+        countMines !== 0
+      ) {
+        youWin();
       }
     }
+
     /**
      * Creates the initial board and when changing levels of difficulty
      */
-    function create_board() {
-      var table = document.createElement("table");
-      table.setAttribute("id", "myTable");
-      document.getElementById("mine_field").appendChild(table);
-      let num = 1;
-      for (let j = 0; j < grid_rows; j++) {
-        let tr = document.createElement("tr");
-        tr.setAttribute("id", "myTr" + j);
+    function createBoard() {
+      const table = document.createElement("table");
+      table.id = "myTable";
+      document.getElementById("mineField").appendChild(table);
+
+      for (let j = 0; j < gridRows; j++) {
+        const tr = document.createElement("tr");
+        tr.id = "myTr" + j;
         document.getElementById("myTable").appendChild(tr);
         cell[j] = [];
-        for (let i = 0; i < grid_cols; i++) {
-          let td = document.createElement("td");
-          td.setAttribute("id", "cell_" + j + "-" + i);
-          td.setAttribute("data-row", j);
-          td.setAttribute("data-col", i);
+
+        for (let i = 0; i < gridCols; i++) {
+          const td = document.createElement("td");
+          td.id = "cell_" + j + "-" + i;
+          td.dataset.row = j;
+          td.dataset.col = i;
           cell[j][i] = {
             mine: false,
-            //adjacent_mines: null,
+            //adjacentMines: null,
             //clicked: null,
             //flagged: null,
           };
           document.getElementById("myTr" + j).appendChild(td);
-          num++;
         }
       }
     }
+
     /**
      * Checks if it is the first click to lay the mines
      */
-    function check_first_click(row, col) {
+    function checkFirstClick(row, col) {
       if (firstClick) {
-        lay_mines(row, col)
+        layMines(row, col)
         firstClick = false
-        buscar_minas_adyacentes()
-        start_timer()
+        searchAdjacentMines()
+        startTimer()
       }
-    }
-    /**
-     * Busqueda de minas en toda la tabla.
-     * Guarda las minas encontradas en una variable
-     */
-    function buscar_minas_adyacentes() {
-      //console.log("buscar_minas_adyacentes, inicio")
-      for (let i = 0; i < grid_rows; i++) {
-        for (let j = 0; j < grid_cols; j++) {
-          cell[i][j].adjacent_mines = mina_adjacente(i, j)
-        }
-      }
-      //console.log("buscar_minas_adyacentes, fin")
     }
 
-    //Busqueda de minas adyacentes alrededor de una celda especifica
-    function mina_adjacente(row, col) {
-      let mine_counter = 0
-      const up_left = () => (cell[row * 1 - 1][col * 1 - 1].mine) ? mine_counter++ : null;
-      const up = () => (cell[row * 1 - 1][col].mine) ? mine_counter++ : null;
-      const up_right = () => (cell[row * 1 - 1][col * 1 + 1].mine) ? mine_counter++ : null;
-      const right = () => (cell[row][col * 1 + 1].mine) ? mine_counter++ : null;
-      const down_right = () => (cell[row * 1 + 1][col * 1 + 1].mine) ? mine_counter++ : null;
-      const down = () => (cell[row * 1 + 1][col].mine) ? mine_counter++ : null;
-      const down_left = () => (cell[row * 1 + 1][col * 1 - 1].mine) ? mine_counter++ : null;
-      const left = () => (cell[row][col * 1 - 1].mine) ? mine_counter++ : null;
-      if (row == 0 && col == 0) {
+    /**
+     * Search for mines throughout the table
+     * It stores the mines it finds in a variable
+     */
+    function searchAdjacentMines() {
+      for (let i = 0; i < gridRows; i++) {
+        for (let j = 0; j < gridCols; j++) {
+          cell[i][j].adjacentMines = _adjacentMines(i, j);
+        }
+      }
+    }
+
+    /**
+     * Search for adjacent mines sourrounding a specific cell
+     */
+    function _adjacentMines(row, col) {
+      let mineCounter = 0;
+
+      const checkAdjacentCell = (r, c) => {
+        if (cell[r][c].mine) mineCounter++;
+      };
+
+      const upLeft = () => checkAdjacentCell(row - 1, col - 1);
+      const up = () => checkAdjacentCell(row - 1, col);
+      const upRight = () => checkAdjacentCell(row - 1, col + 1);
+      const right = () => checkAdjacentCell(row, col + 1);
+      const downRight = () => checkAdjacentCell(row + 1, col + 1);
+      const down = () => checkAdjacentCell(row + 1, col);
+      const downLeft = () => checkAdjacentCell(row + 1, col - 1);
+      const left = () => checkAdjacentCell(row, col - 1);
+
+      if (row === 0 && col === 0) {
         //top left corner
-        down()
-        down_right()
-        right()
-      } else if (row == 0 && col == grid_cols * 1 - 1) {
+        down();
+        downRight();
+        right();
+      } else if (row === 0 && col === gridCols - 1) {
         //top right corner
-        left()
-        down_left()
-        down()
-      } else if (row == 0 && col < grid_cols * 1 - 1) {
+        left();
+        downLeft();
+        down();
+      } else if (row === 0 && col < gridCols - 1) {
         //top between corners
-        left()
-        down_left()
-        down()
-        down_right()
-        right()
-      } else if (row < grid_rows * 1 - 1 && col == 0) {
+        left();
+        downLeft();
+        down();
+        downRight();
+        right();
+      } else if (row < gridRows - 1 && col === 0) {
         //left between corners
-        up()
-        up_right()
-        right()
-        down_right()
-        down()
-      } else if (row == grid_rows * 1 - 1 && col == 0) {
+        up();
+        upRight();
+        right();
+        downRight();
+        down();
+      } else if (row === gridRows - 1 && col === 0) {
         //bottom left corner
-        up()
-        up_right()
-        right()
-      } else if (row == grid_rows * 1 - 1 && col < grid_cols * 1 - 1) {
+        up();
+        upRight();
+        right();
+      } else if (row === gridRows - 1 && col < gridCols - 1) {
         //bottom between corners
-        left()
-        up_left()
-        up()
-        up_right()
-        right()
-      } else if (row == grid_rows * 1 - 1 && col == grid_cols * 1 - 1) {
+        left();
+        upLeft();
+        up();
+        upRight();
+        right();
+      } else if (row === gridRows - 1 && col === gridCols - 1) {
         //bottom right corner
-        left()
-        up_left()
-        up()
-      } else if (row > 0 && col == grid_cols * 1 - 1) {
+        left();
+        upLeft();
+        up();
+      } else if (row > 0 && col === gridCols - 1) {
         // right between corners
-        up()
-        up_left()
-        left()
-        down_left()
-        down()
+        up();
+        upLeft();
+        left();
+        downLeft();
+        down();
       } else {
-        up()
-        up_right()
-        right()
-        down_right()
-        down()
-        down_left()
-        left()
-        up_left()
+        up();
+        upRight();
+        right();
+        downRight();
+        down();
+        downLeft();
+        left();
+        upLeft();
       }
-      return mine_counter
+
+      return mineCounter;
     }
 
-    function lay_mines(row, col) {
-      //console.log("lay_mines, inicio")
-      let counter = 0
-      let visual_counter = 0
-      let currentCell = document.getElementById("cell_" + row + "-" + col)
+
+    /**
+     * Lay the mines after the first click
+     */
+    function layMines(row, col) {
+      let counter = 0;
+      let currentCell = document.getElementById("cell_" + row + "-" + col);
+
       try {
-        cell[row][col].safe = true
-          //console.log("safe cell is : row col")
-          //console.log(row)
-          //console.log(col)
+        cell[row][col].safe = true;
       } catch (error) {
-        //prevent error display in console
+        // prevent error from showing in the console
       }
-      while (counter < inicial_mines) {
-        let i = Math.floor(Math.random() * grid_rows)
-        let j = Math.floor(Math.random() * grid_cols)
-        if (!cell[i][j].safe) {
-          //prevent mines from repeating a cell
-          if (!cell[i][j].mine) {
-            cell[i][j].mine = true
-            counter++
-            //mine locations
-            console.log("mine location: " + i + "-" + j) //borrar
-          }
-        }
-        visual_counter++
-      }
-      //console.log("mine counter " + counter) //borrar
-      //console.log("lay_mines, fin + visual counter " + visual_counter)
-    }
-    /**
-     * Displays all mines when the user loses
-     */
-    function display_all_mines() {
-      for (let i = 0; i < grid_rows; i++) {
-        for (let j = 0; j < grid_cols; j++) {
-          if (cell[i][j].mine) {
-            let element = document.getElementById("cell_" + i * 1 + "-" + j * 1);
-            element.classList.add("mine")
-            element.classList.add("bandera")
-          }
+
+      let tempNumber1 = 0
+      let tempNumber2 = 0
+      let i = 0;
+      let j = 0;
+      let tempCounter = 0;
+      while (counter < initialMines) {
+
+
+        do {
+          i = Math.floor(Math.random() * gridRows);
+        } while (tempNumber1 === i)
+
+        do {
+          j = Math.floor(Math.random() * gridCols);
+          console.log(tempCounter++)
+        } while (tempNumber2 === j)
+
+        tempNumber1 = i;
+        tempNumber2 = j;
+
+        if (!cell[i][j].safe && !cell[i][j].mine) {
+          cell[i][j].mine = true;
+          counter++;
         }
       }
     }
 
+
     /**
-     * Displays "Game Over" when the user loses
+     * Displays all mines when the user loses in different colors
+     * Yellow for mines you clicked that are not really mines
+     * Red for the mines you did not click
+     * Blue for the mines you clicked
      */
-    function you_lost() {
-      display_message("loser")
-      disable_table()
+    function displayAllMines() {
+      for (let i = 0; i < gridRows; i++) {
+        for (let j = 0; j < gridCols; j++) {
+          let element = document.getElementById("cell_" + i + "-" + j);
+
+          if (!cell[i][j].mine && element.classList.contains("flag")) {
+            element.classList.add("fakeMine"); //yellow
+            element.classList.add("flag");
+          } else if (cell[i][j].mine && !element.classList.contains("flag")) {
+            element.classList.add("mineLost"); //red
+            element.classList.add("flag");
+          } else if (cell[i][j].mine) {
+            element.classList.add("mine"); // blue
+            element.classList.add("flag");
+          }
+        }
+      }
     }
 
-    function you_win() {
-      display_message("winner");
-      disable_table()
+
+    /**
+     * Displays "Game Over" when the user loses 
+     * prevent anymore clicks on the table 
+     */
+    function youLost() {
+      displayMessage("loser")
+      disableTable()
     }
 
-    function disable_table() {
-      stop_clicks = true
-      stop_timer();
+    /**
+     * Displays "Winner" when the user wins 
+     * prevent anymore clicks on the table 
+     */
+    function youWin() {
+      displayMessage("winner");
+      disableTable()
+    }
+
+    /**
+     * Stops the timer and activates the variable to stop clicks
+     */
+    function disableTable() {
+      stopClicks = true
+      stopTimer();
     }
 
     /**
      * Text message displaying function
      */
-    function display_message(text, value) {
+    function displayMessage(text, value) {
+      const youLostElement = document.getElementById("youLost");
+      const youWonElement = document.getElementById("youWon");
+      const tableElement = document.getElementById("myTable");
+      const minePendingElement = document.getElementById("displayMinePending");
+
       switch (text) {
         case "loser":
-          document.getElementById("you_lost").innerHTML = "Game Over"
-          document.getElementById("myTable").classList.add("border_lost")
+          youLostElement.innerHTML = "Game Over";
+          tableElement.classList.add("borderGameLost");
           break;
         case "winner":
-          document.getElementById("myTable").classList.add("border_won")
-          document.getElementById("you_won").innerHTML = "You Won"
+          tableElement.classList.add("borderGameWon");
+          youWonElement.innerHTML = "You Won";
           break;
         case "pending":
-          document.getElementById("display_mine_pending").innerHTML = value
+          minePendingElement.innerHTML = value;
           break;
         default:
           break;
       }
     }
-    //===============================================================
-
-
 
 
     /**
-     * attempt to propagate zeros - //in development
+     * Marks the current cell as "clicked"
      */
-    function count_zero(row, col) {
-      row *= 1 //making sure it is a number afterwards
-      col *= 1
-      var bundle = {}
-      let counter = 0
-      let control_counter = 0
-      let i = j = 0
-      let layer = 0
+    function markAsClicked(row, col) {
+      const clickedCell = document.getElementById("cell_" + row + "-" + col);
+      cell[row][col].clicked = true;
+      clickedCell.classList.add("clicked");
+    }
 
-      _find_zeroes_around_cell(row, col)
-
-      console.log("bundle")
-      console.log(bundle)
-
-      //longitud de la variable bundle
-      let bundle_length = Object.keys(bundle).length
-
-      //no adyacent mines, not clicked, not a mine
-      function __is_cell_empty_before_click(row, col) {
-        if (!cell[row][col].adjacent_mines && !cell[row][col].clicked && !cell[row][col].mine) {
-          return true
-        }
-      }
-
-
-      function _find_zeroes_around_cell(row, col) {
-
-        if (!cell[row][col].adjacent_mines) {
-          layer++
-          row *= 1
-          col *= 1
-
-          let _up = row * 1 - 1
-          let _left = col * 1 - 1
-          let _right = col * 1 + 1
-          let _down = row * 1 + 1
-
-          let a = grid_cols * 1 - 1
-          let b = grid_rows * 1 - 1
-
-          function set_clicked(row, col) {
-            mark_as_clicked(row, col)
-          }
-
-          if (row == 0 && col == 0) {
-            //top left corner
-            down()
-            down_right()
-            right()
-          } else if (row == 0 && col == a) {
-            //top right corner
-            left()
-            down_left()
-            down()
-          } else if (row == 0 && col < a) {
-            //top between corners
-            left()
-            down_left()
-            down()
-            down_right()
-            right()
-          } else if (row < b && col == 0) {
-            //left between corners
-            up()
-            up_right()
-            right()
-            down_right()
-            down()
-          } else if (row == b && col == 0) {
-            //bottom left corner
-            up()
-            up_right()
-            right()
-          } else if (row == b && col < a) {
-            //bottom between corners
-            left()
-            up_left()
-            up()
-            up_right()
-            right()
-          } else if (row == b && col == a) {
-            //bottom right corner
-            left()
-            up_left()
-            up()
-          } else if (row > 0 && col == a) {
-            // right between corners
-            up()
-            up_left()
-            left()
-            down_left()
-            down()
-          } else {
-            up()
-            up_right()
-            right()
-            down_right()
-            down()
-            down_left()
-            left()
-            up_left()
-          }
-
-          function up_left() {
-            if (!cell[_up][_left].adjacent_mines) {
-              set_clicked(_up, _left)
-            }
-          }
-
-          function up() {
-            if (!cell[_up][col].adjacent_mines) {
-              set_clicked(_up, col)
-            }
-          }
-
-          function up_right() {
-            if (!cell[_up][_right].adjacent_mines) {
-              set_clicked(_up, _right)
-            }
-          }
-
-          function right() {
-            if (!cell[row][_right].adjacent_mines) {
-              set_clicked(row, _right)
-            }
-          }
-
-          function down_right() {
-            if (!cell[_down][_right].adjacent_mines) {
-              set_clicked(_down, _right)
-            }
-          }
-
-          function down() {
-            if (!cell[_down][col].adjacent_mines) {
-              set_clicked(_down, col)
-            }
-          }
-
-          function down_left() {
-            if (!cell[_down][_left].adjacent_mines) {
-              set_clicked(_down, _left)
-            }
-          }
-
-          function left() {
-            if (!cell[row][_left].adjacent_mines) {
-              set_clicked(row, _left)
-            }
-          }
-        }
+    /**
+     * Writes the adjacent mines around a specific cell
+     */
+    function writeAdjacentMines(row, col) {
+      const clickedCell = document.getElementById("cell_" + row + "-" + col);
+      const adjacentMines = cell[row][col].adjacentMines;
+      if (adjacentMines > 0) {
+        clickedCell.innerHTML = adjacentMines;
       }
     }
 
-    function unique_values(items) {
-      //let items_length = Object.keys(items).length
-      let d = {}
-      let out = []
-      for (let i = 0; i < Object.keys(items).length; i++) {
-        let item = items[i]
-        let rep = item.toString()
 
-        if (!d[rep]) {
-          d[rep] = true;
-          out.push(item)
-        }
+    //===============================================================
+
+    /**
+     * Propagates clicks on cells that have no adjacent mines
+     */
+    function countZero(row, col) {
+      row = Number(row);
+      col = Number(col);
+
+      let adjacentCells = getAdjacentCells(row, col);
+
+      let zerosAndGreater = adjacentCells.filter(function(coord) {
+        let row = coord[0];
+        let column = coord[1];
+        return cell[row][column] === 0 || cell[row][column] > 0;
+      });
+
+      for (let i = 0; i < adjacentCells.length; i++) {
+        let row = adjacentCells[i][0];
+        let column = adjacentCells[i][1];
+        writeAdjacentMines(row, column);
+        markAsClicked(row, column);
       }
-      return out
     }
 
-    function mark_as_clicked(row, col) {
-      let clicked = document.getElementById("cell_" + row + "-" + col);
-      cell[row][col].clicked = true
-      clicked.classList.add("clicked")
+    /** 
+     * Get the coordinates of adjacent cells 
+     */
+    function getAdjacentCells(row, column) {
+      let adjacentCells = [];
+      let visited = new Set();
+
+      /**
+       * Check if a cell has been visited
+       */
+      function isCellVisited(row, column) {
+        return visited.has(`${row},${column}`);
+      }
+      /**
+       * Mark a cell as visited
+       */
+      function markCellAsVisited(row, column) {
+        visited.add(`${row},${column}`);
+      }
+
+      /**
+       * Relative coordinates of adjacent cells (left, top, right, bottom)
+       */
+      let directions = [
+        [0, -1], // left
+        [-1, 0], // top
+        [0, 1], // right
+        [1, 0], // bottom
+        [-1, -1], // top left
+        [-1, 1], // top right
+        [1, -1], // bottom left
+        [1, 1] // bottom right
+      ];
+
+      /**
+       * Function to recursively search for adjacent cells
+       */
+      function searchAdjacentCellsRecursive(row, column) {
+        if (isCellVisited(row, column)) {
+          return;
+        }
+
+        markCellAsVisited(row, column);
+        adjacentCells.push([row, column]);
+
+        // Iterate over the adjacent directions
+        for (let i = 0; i < directions.length; i++) {
+          let direction = directions[i];
+          let adjacentRow = row + direction[0];
+          let adjacentColumn = column + direction[1];
+
+          // Check if the adjacent cell is within the grid limits
+          if (adjacentRow >= 0 && adjacentRow < gridRows && adjacentColumn >= 0 && adjacentColumn < gridCols) {
+
+            // Check if the adjacent cell is a zero
+            if (cell[adjacentRow][adjacentColumn].adjacentMines === 0) {
+              searchAdjacentCellsRecursive(adjacentRow, adjacentColumn);
+            } else {
+              // If the adjacent cell has a number greater than zero, stop exploring further
+              adjacentCells.push([adjacentRow, adjacentColumn]);
+            }
+          }
+        }
+      }
+
+      // Check if the initial coordinates are valid
+      if (
+        row >= 0 &&
+        row < gridRows &&
+        column >= 0 &&
+        column < gridCols
+      ) {
+        // Search for adjacent cells starting from the given coordinates
+        searchAdjacentCellsRecursive(row, column);
+      }
+
+      return adjacentCells;
     }
 
     /**
      * Left click controls
      */
     document.onclick = (e) => {
-      const my_node = document.getElementById('myTable')
-      const isClickInside = my_node.contains(e.target)
-        //console.log("isClickInside: " + isClickInside + " doc.onclick")
+      const myNode = document.getElementById('myTable');
+      const isClickInside = myNode.contains(e.target);
+
       let row = e.target.dataset.row;
       let col = e.target.dataset.col;
+      row = Number(row);
+      col = Number(col);
+
       if (isClickInside && row > -1) {
-        //console.log("document.onclick + e.target.dataset.row: " + row) //borrar
-        //console.log("document.onclick + e.target.dataset.col: " + col) //borrar
         let clicked = document.getElementById("cell_" + row + "-" + col);
-        //Poner minas
-        check_first_click(row, col)
+
+        checkFirstClick(row, col);
+
         try {
-          if (clicked.classList.contains("bandera") || clicked.classList.contains("duda")) {
-            e.preventDefault()
+          if (clicked.classList.contains("flag") || clicked.classList.contains("hesitation")) {
+            e.preventDefault();
           } else {
-            //Estoy haciendo click en una mina?
             if (cell[row][col].mine) {
-              //muestra todas las minas
-              display_all_mines()
-              you_lost()
-              e.preventDefault()
-            } else { //if cell is not a mine
-              if (!stop_clicks) {
-
-                //escribir numero de minas adyacentes
-                if (cell[row][col].adjacent_mines > 0) {
-                  clicked.innerHTML = cell[row][col].adjacent_mines
+              displayAllMines();
+              youLost();
+              e.preventDefault();
+            } else {
+              if (!stopClicks) {
+                if (cell[row][col].adjacentMines > 0) {
+                  writeAdjacentMines(row, col);
                 } else {
-                  count_zero(row, col);
+                  countZero(row, col);
                 }
-                //Agrega la clase "clicked" a la celda actual y la pone gris
-                mark_as_clicked(row, col)
-
-                object_counter()
-
+                markAsClicked(row, col);
+                objectCounter();
               } else {
-                e.preventDefault()
-                disable_table()
+                e.preventDefault();
+                disableTable();
               }
             }
           }
         } catch (error) {
-          //Preventing the error to be displayed in the console
+          // Prevent errors from showing in the console
         }
       }
-    }
+    };
+
 
     /**
      * Right click functions
      */
     document.oncontextmenu = (e) => {
-      e.preventDefault()
+      e.preventDefault();
       let row = e.target.dataset.row;
       let col = e.target.dataset.col;
       let clicked = document.getElementById("cell_" + row + "-" + col);
+
       try {
-        if (!stop_clicks) {
-          //si ya ha sido clicked no puede hacer click derecho
+        if (!stopClicks) {
           if (!clicked.classList.contains("clicked")) {
-            //Intercambio de Bandera por duda
-            if (!clicked.classList.contains("bandera") && !clicked.classList.contains("duda")) {
-              clicked.classList.toggle("bandera");
-              cell[row][col].flagged = true
-              object_counter()
-            } else if (clicked.classList.contains("bandera")) {
-              clicked.classList.remove("bandera")
-              cell[row][col].flagged = false
-              clicked.classList.toggle("duda");
-            } else if (clicked.classList.contains("duda")) {
-              clicked.classList.remove("duda")
-              object_counter()
+            if (!clicked.classList.contains("flag") && !clicked.classList.contains("hesitation")) {
+              clicked.classList.toggle("flag");
+              cell[row][col].flagged = true;
+              objectCounter();
+            } else if (clicked.classList.contains("flag")) {
+              clicked.classList.remove("flag");
+              cell[row][col].flagged = false;
+              clicked.classList.toggle("hesitation");
+            } else if (clicked.classList.contains("hesitation")) {
+              clicked.classList.remove("hesitation");
+              objectCounter();
             }
           }
         } else {
-          e.preventDefault()
-          disable_table()
+          e.preventDefault();
+          disableTable();
         }
       } catch (error) {
-        //Preventing the error to be displayed in the console
-        //document.getElementById("error").innerHTML = "oncontextmenu: \n"+error
+        // Prevent errors from showing in the console
       }
-    }
+    };
   </script>
 </body>
 
